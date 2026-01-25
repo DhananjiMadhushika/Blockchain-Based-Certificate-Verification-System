@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Certificate Verification - MetaMask + IPFS</title>
+    
+    <!-- Updated ethers.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .wallet-info {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .network-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 5px;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+        
+        .connect-btn {
+            padding: 10px 20px;
+            background: white;
+            color: #667eea;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        
+        .connect-btn:hover {
+            background: #f0f0f0;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .tab-button {
+            flex: 1;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 10px;
+        }
+        
+        .tab-button.active {
+            background: white;
+            color: #667eea;
+        }
+        
+        .tab-content {
+            display: none;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        button[type="submit"] {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        
+        button[type="submit"]:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 8px;
+            display: none;
+        }
+        
+        .result.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        
+        .result.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        
+        .result.info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        
+        .cert-details {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+        
+        .cert-details p {
+            margin: 8px 0;
+            word-break: break-word;
+        }
+        
+        .ipfs-link {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 10px 15px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        
+        .ipfs-link:hover {
+            background: #5568d3;
+        }
+        
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            color: #856404;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔐 Certificate System</h1>
+            <p>MetaMask + Blockchain + IPFS</p>
+        </div>
+        
+        <div class="wallet-info">
+            <div>
+                <strong id="walletStatus">Not Connected</strong>
+                <span class="network-badge" id="networkBadge">No Network</span>
+                <p id="walletAddress" style="font-size: 12px; margin-top: 5px;"></p>
+            </div>
+            <button class="connect-btn" id="connectWallet">Connect MetaMask</button>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab-button active" onclick="switchTab('issue')">Issue Certificate</button>
+            <button class="tab-button" onclick="switchTab('verify')">Verify Certificate</button>
+        </div>
+        
+        <!-- Issue Tab -->
+        <div id="issue" class="tab-content active">
+            <h2>Issue New Certificate</h2>
+            
+            <div class="warning" id="metamaskWarning">
+                ⚠️ Connect MetaMask to issue certificates
+            </div>
+            
+            <form id="issueForm">
+                <div class="form-group">
+                    <label>Recipient Name *</label>
+                    <input type="text" id="recipientName" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Course/Achievement *</label>
+                    <input type="text" id="courseName" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Email (optional)</label>
+                    <input type="email" id="recipientEmail">
+                </div>
+                
+                <div class="form-group">
+                    <label>Upload Certificate File (PDF/Image - optional)</label>
+                    <input type="file" id="certificateFile" accept=".pdf,.jpg,.jpeg,.png">
+                </div>
+                
+                <button type="submit">Issue Certificate</button>
+            </form>
+            
+            <div class="result" id="issueResult"></div>
+        </div>
+        
+        <!-- Verify Tab -->
+        <div id="verify" class="tab-content">
+            <h2>Verify Certificate</h2>
+            <form id="verifyForm">
+                <div class="form-group">
+                    <label>Certificate ID *</label>
+                    <input type="text" id="certificateId" placeholder="CERT-..." required>
+                </div>
+                
+                <button type="submit">Verify</button>
+            </form>
+            
+            <div class="result" id="verifyResult"></div>
+        </div>
+    </div>
+
+    <script>
+        // Check if ethers.js loaded
+        if (typeof ethers === 'undefined') {
+            console.error('❌ ethers.js not loaded!');
+            alert('Error: ethers.js library failed to load. Please check your internet connection.');
+        } else {
+            console.log('✅ ethers.js loaded! Version:', ethers.version);
+        }
+
+        let provider, signer, contract, userAddress;
+        let contractAddress, contractABI;
+        
+        // Network configurations
+        const NETWORKS = {
+            1: { name: 'Ethereum Mainnet', color: '#627eea' },
+            11155111: { name: 'Sepolia', color: '#ffc107' },
+            1337: { name: 'Hardhat Local', color: '#f0ad4e' },
+            80001: { name: 'Polygon Mumbai', color: '#8247e5' }
+        };
+        
+        // Load contract info
+        async function loadContract() {
+            try {
+                const response = await fetch('/api/contract-info');
+                if (!response.ok) {
+                    throw new Error('Failed to load contract info');
+                }
+                const data = await response.json();
+                contractAddress = data.address;
+                contractABI = data.abi;
+                console.log('✅ Contract info loaded:', contractAddress);
+            } catch (error) {
+                console.error('❌ Error loading contract:', error);
+                throw error;
+            }
+        }
+        
+        // Update network badge
+        function updateNetworkBadge(chainId) {
+            const badge = document.getElementById('networkBadge');
+            const network = NETWORKS[chainId] || { name: 'Unknown Network', color: '#6c757d' };
+            badge.textContent = network.name;
+            badge.style.background = network.color;
+        }
+        
+        // Connect MetaMask
+        document.getElementById('connectWallet').addEventListener('click', async () => {
+            if (typeof window.ethereum === 'undefined') {
+                alert('Please install MetaMask first!\n\nGo to: https://metamask.io/');
+                window.open('https://metamask.io/', '_blank');
+                return;
+            }
+            
+            try {
+                await loadContract();
+                
+                // Request account access
+                const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+                userAddress = accounts[0];
+                
+                // Create provider and signer
+                provider = new ethers.providers.Web3Provider(window.ethereum);
+                signer = provider.getSigner();
+                
+                // Get network info
+                const network = await provider.getNetwork();
+                console.log('Connected to network:', network.name, 'Chain ID:', network.chainId);
+                
+                // Update UI with network info
+                updateNetworkBadge(network.chainId);
+                
+                // Create contract instance
+                contract = new ethers.Contract(contractAddress, contractABI, signer);
+                
+                // Update UI
+                document.getElementById('walletStatus').textContent = '✅ Connected';
+                document.getElementById('walletAddress').textContent = userAddress.substring(0, 6) + '...' + userAddress.substring(38);
+                document.getElementById('connectWallet').textContent = 'Connected';
+                document.getElementById('connectWallet').style.background = '#28a745';
+                document.getElementById('connectWallet').style.color = 'white';
+                document.getElementById('metamaskWarning').style.display = 'none';
+                
+                console.log('✅ Connected to MetaMask:', userAddress);
+                
+                // Show success message
+                const warningDiv = document.getElementById('metamaskWarning');
+                warningDiv.className = 'result info';
+                warningDiv.style.display = 'block';
+                warningDiv.innerHTML = `
+                    ✅ Connected successfully!<br>
+                    <small>Network: ${NETWORKS[network.chainId]?.name || 'Chain ID ' + network.chainId}<br>
+                    Address: ${userAddress}</small>
+                `;
+                
+                setTimeout(() => {
+                    warningDiv.style.display = 'none';
+                }, 5000);
+                
+            } catch (error) {
+                console.error('❌ Connection error:', error);
+                alert('Failed to connect MetaMask:\n\n' + error.message);
+            }
+        });
+        
+        // Listen for account changes
+        if (window.ethereum) {
+            window.ethereum.on('accountsChanged', (accounts) => {
+                if (accounts.length === 0) {
+                    location.reload();
+                } else {
+                    userAddress = accounts[0];
+                    document.getElementById('walletAddress').textContent = userAddress.substring(0, 6) + '...' + userAddress.substring(38);
+                }
+            });
+            
+            window.ethereum.on('chainChanged', () => {
+                location.reload();
+            });
+        }
+        
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+        }
+        
+        // Issue Certificate
+        document.getElementById('issueForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (!contract) {
+                alert('Please connect MetaMask first!');
+                return;
+            }
+            
+            const resultDiv = document.getElementById('issueResult');
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            resultDiv.style.display = 'none';
+            submitBtn.disabled = true;
+            
+            try {
+                // Prepare form data
+                const formData = new FormData();
+                formData.append('recipientName', document.getElementById('recipientName').value);
+                formData.append('courseName', document.getElementById('courseName').value);
+                formData.append('recipientEmail', document.getElementById('recipientEmail').value);
+                
+                const fileInput = document.getElementById('certificateFile');
+                if (fileInput.files[0]) {
+                    formData.append('certificateFile', fileInput.files[0]);
+                }
+                
+                // Upload to IPFS
+                resultDiv.className = 'result info';
+                resultDiv.style.display = 'block';
+                resultDiv.innerHTML = '<p>📤 Uploading to IPFS...</p>';
+                
+                const response = await fetch('/api/certificates/issue', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (!data.success) {
+                    throw new Error(data.error || 'Failed to prepare certificate');
+                }
+                
+                // Issue on blockchain
+                resultDiv.innerHTML = '<p>⛓️ Please confirm transaction in MetaMask...</p>';
+                
+                const tx = await contract.issueCertificate(
+                    data.certificateId,
+                    data.ipfsHash,
+                    data.dataHash,
+                    data.certificateData.recipientName,
+                    data.certificateData.courseName
+                );
+                
+                resultDiv.innerHTML = '<p>⏳ Transaction submitted. Waiting for confirmation...<br><small>This may take 15-30 seconds</small></p>';
+                
+                const receipt = await tx.wait();
+                
+                resultDiv.className = 'result success';
+                resultDiv.innerHTML = `
+                    <h3>✅ Certificate Issued Successfully!</h3>
+                    <div class="cert-details">
+                        <p><strong>Certificate ID:</strong> ${data.certificateId}</p>
+                        <p><strong>Recipient:</strong> ${data.certificateData.recipientName}</p>
+                        <p><strong>Course:</strong> ${data.certificateData.courseName}</p>
+                        <p><strong>IPFS Hash:</strong> ${data.ipfsHash}</p>
+                        <p><strong>Transaction Hash:</strong> ${receipt.transactionHash}</p>
+                        ${data.ipfsHash !== '' ? `
+                        <a href="https://gateway.pinata.cloud/ipfs/${data.ipfsHash}" 
+                           target="_blank" class="ipfs-link">
+                            📄 View Certificate File on IPFS
+                        </a>
+                        ` : ''}
+                    </div>
+                    <p style="margin-top: 15px; padding: 10px; background: #fff3cd; border-radius: 5px;">
+                        ⚠️ <strong>Save this Certificate ID:</strong> ${data.certificateId}<br>
+                        You'll need it to verify the certificate later!
+                    </p>
+                `;
+                
+                e.target.reset();
+                
+            } catch (error) {
+                console.error('❌ Error:', error);
+                resultDiv.className = 'result error';
+                
+                let errorMsg = error.message;
+                if (error.code === 4001) {
+                    errorMsg = 'Transaction rejected by user';
+                } else if (error.code === -32603) {
+                    errorMsg = 'Internal error. Check if you have enough ETH for gas fees.';
+                }
+                
+                resultDiv.innerHTML = `
+                    <h3>❌ Error</h3>
+                    <p>${errorMsg}</p>
+                    ${error.reason ? `<p><small>Reason: ${error.reason}</small></p>` : ''}
+                `;
+                resultDiv.style.display = 'block';
+            } finally {
+                submitBtn.disabled = false;
+            }
+        });
+        
+        // Verify Certificate
+        document.getElementById('verifyForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const resultDiv = document.getElementById('verifyResult');
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            resultDiv.style.display = 'none';
+            submitBtn.disabled = true;
+            
+            try {
+                const certId = document.getElementById('certificateId').value;
+                
+                resultDiv.className = 'result info';
+                resultDiv.style.display = 'block';
+                resultDiv.innerHTML = '<p>🔍 Checking blockchain...</p>';
+                
+                const response = await fetch(`/api/certificates/${certId}`);
+                
+                if (!response.ok) {
+                    throw new Error('Certificate not found on blockchain');
+                }
+                
+                const data = await response.json();
+                
+                if (data.isValid) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `
+                        <h3>✅ Valid Certificate</h3>
+                        <p>This certificate is authentic and has been verified on the blockchain.</p>
+                        <div class="cert-details">
+                            <p><strong>Recipient:</strong> ${data.recipientName}</p>
+                            <p><strong>Course:</strong> ${data.courseName}</p>
+                            <p><strong>Issue Date:</strong> ${new Date(data.issueDate).toLocaleString()}</p>
+                            <p><strong>Issuer Address:</strong> ${data.issuer}</p>
+                            <p><strong>IPFS Hash:</strong> ${data.ipfsHash}</p>
+                            ${data.ipfsHash && data.ipfsHash !== '' ? `
+                            <a href="${data.ipfsUrl}" target="_blank" class="ipfs-link">
+                                📄 View Certificate File on IPFS
+                            </a>
+                            ` : ''}
+                        </div>
+                    `;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = `
+                        <h3>❌ Certificate Revoked</h3>
+                        <p>This certificate has been revoked and is no longer valid.</p>
+                        <div class="cert-details">
+                            <p><strong>Recipient:</strong> ${data.recipientName}</p>
+                            <p><strong>Course:</strong> ${data.courseName}</p>
+                            <p><strong>Issue Date:</strong> ${new Date(data.issueDate).toLocaleString()}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('❌ Error:', error);
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `
+                    <h3>❌ Certificate Not Found</h3>
+                    <p>${error.message}</p>
+                    <p><small>Make sure you entered the correct Certificate ID.</small></p>
+                `;
+            } finally {
+                resultDiv.style.display = 'block';
+                submitBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

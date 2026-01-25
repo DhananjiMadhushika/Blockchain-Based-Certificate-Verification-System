@@ -1,0 +1,36 @@
+{
+  "name": "blockchain-based-certificate-verification-system",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DhananjiMadhushika/Blockchain-Based-Certificate-Verification-System.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/DhananjiMadhushika/Blockchain-Based-Certificate-Verification-System/issues"
+  },
+  "homepage": "https://github.com/DhananjiMadhushika/Blockchain-Based-Certificate-Verification-System#readme",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "crypto": "^1.0.1",
+    "dotenv": "^17.2.3",
+    "ethers": "^6.8.0",
+    "express": "^5.2.1",
+    "hardhat": "^2.22.0",
+    "ipfs-http-client": "^60.0.1",
+    "multer": "^2.0.2",
+    "pdfkit": "^0.17.2"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@openzeppelin/contracts": "^5.4.0"
+  }
+}
