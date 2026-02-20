@@ -6,8 +6,8 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 contract CertificateRegistry is Ownable {
     
     struct Certificate {
-        string ipfsHash;        // IPFS hash of the PDF
-        string dataHash;        // Hash of certificate data
+        string ipfsHash;
+        string dataHash;
         string recipientName;
         string courseName;
         uint256 issueDate;
