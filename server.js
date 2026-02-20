@@ -24,7 +24,7 @@ try {
     const artifact = JSON.parse(fs.readFileSync('./artifacts/contracts/CertificateRegistry.sol/CertificateRegistry.json', 'utf8'));
     contractABI = artifact.abi;
 } catch (error) {
-    console.error('❌ Contract not deployed! Run: npm run deploy');
+    console.error('Contract not deployed! Run: npm run deploy');
     process.exit(1);
 }
 
@@ -248,19 +248,19 @@ app.post('/api/certificates/issue', upload.single('certificateFile'), async (req
         
         // If user uploaded a file, use that
         if (req.file) {
-            console.log('📤 Uploading user file to IPFS...');
+            console.log('Uploading user file to IPFS...');
             ipfsHash = await uploadToIPFS(req.file.path, `${certificateId}.pdf`);
             fs.unlinkSync(req.file.path);
         } else {
             // Generate beautiful PDF certificate
-            console.log('🎨 Generating PDF certificate...');
+            console.log('Generating PDF certificate...');
             pdfPath = await generateCertificatePDF(certificateData);
-            console.log('📤 Uploading generated PDF to IPFS...');
+            console.log('Uploading generated PDF to IPFS...');
             ipfsHash = await uploadToIPFS(pdfPath, `${certificateId}.pdf`);
             fs.unlinkSync(pdfPath);
         }
         
-        console.log('✅ IPFS Hash:', ipfsHash);
+        console.log('IPFS Hash:', ipfsHash);
         
         res.json({
             success: true,
@@ -282,19 +282,19 @@ app.post('/api/certificates/issue', upload.single('certificateFile'), async (req
 app.get('/api/certificates/:id', async (req, res) => {
     try {
         const certificateId = req.params.id;
-        console.log('🔍 Verifying certificate:', certificateId);
+        console.log('Verifying certificate:', certificateId);
         
         const cert = await contract.getCertificate(certificateId);
         
         if (!cert.recipientName || cert.recipientName === '') {
-            console.log('❌ Certificate not found');
+            console.log('Certificate not found');
             return res.status(404).json({ 
                 error: 'Certificate not found',
                 message: 'This certificate ID does not exist on the blockchain'
             });
         }
         
-        console.log('✅ Certificate found:', cert.recipientName);
+        console.log('Certificate found:', cert.recipientName);
         
         res.json({
             certificateId,
@@ -364,8 +364,6 @@ app.get('/api/certificates/:id/file', async (req, res) => {
 // Batch certificate issuance
 app.post('/api/certificates/batch', upload.single('csvFile'), async (req, res) => {
     try {
-        // This would parse a CSV file with multiple recipients
-        // For now, return a placeholder
         res.json({
             message: 'Batch issuance coming soon',
             info: 'Upload a CSV with columns: recipientName, courseName, email'

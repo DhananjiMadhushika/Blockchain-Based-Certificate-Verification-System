@@ -199,6 +199,12 @@
 
         .connect-wallet-btn.connected {
             background: #27ae60;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            
+            
         }
 
         .alert {
@@ -351,13 +357,13 @@
             <div class="portal-buttons">
                 <div class="portal-card" onclick="showInstituteLogin()">
                     <div class="icon">🏛️</div>
-                    <h3>Institute Portal</h3>
+                    <h3>Institute</h3>
                     <p>Issue and manage certificates</p>
                 </div>
                 
                 <div class="portal-card" onclick="showVerifier()">
                     <div class="icon">✅</div>
-                    <h3>Verifier Portal</h3>
+                    <h3>Verifier</h3>
                     <p>Verify certificate authenticity</p>
                 </div>
             </div>
@@ -435,7 +441,7 @@
                 </div>
                 
                 <div class="form-group">
-                    <label>Upload Certificate (PDF/Image - Optional)</label>
+                    <label>Upload Certificate (PDF/Image)</label>
                     <input type="file" id="certificateFile" accept=".pdf,.jpg,.jpeg,.png">
                 </div>
                 
@@ -499,7 +505,7 @@
                 document.getElementById('instituteDashboard').classList.add('active');
                 errorDiv.classList.add('hidden');
             } else {
-                errorDiv.textContent = '❌ Invalid username or password';
+                errorDiv.textContent = 'Invalid username or password';
                 errorDiv.classList.remove('hidden');
             }
         }
@@ -605,7 +611,7 @@
                 
                 resultDiv.innerHTML = `
                     <div class="alert alert-success">
-                        <h3>✅ Certificate Issued Successfully!</h3>
+                        <h3>Certificate Issued Successfully!</h3>
                     </div>
                     <div class="cert-details">
                         <p><strong>Certificate ID:</strong> ${data.certificateId}</p>
@@ -614,7 +620,7 @@
                         <p><strong>IPFS Hash:</strong> ${data.ipfsHash}</p>
                     </div>
                     <div class="qr-section">
-                        <h3>📱 QR Code for Verification</h3>
+                        <h3>QR Code for Verification</h3>
                         <div id="qrcode"></div>
                         <div class="verify-url">${verifyUrl}</div>
                         <button class="btn-secondary" onclick="downloadQR('${data.certificateId}')">Download QR Code</button>
@@ -632,7 +638,7 @@
                 document.getElementById('issueCertForm').reset();
 
             } catch (error) {
-                resultDiv.innerHTML = `<div class="alert alert-error">❌ Error: ${error.message}</div>`;
+                resultDiv.innerHTML = `<div class="alert alert-error"> Error: ${error.message}</div>`;
             } finally {
                 issueBtn.disabled = false;
                 issueBtn.textContent = 'Issue Certificate';
@@ -646,7 +652,7 @@
             const resultDiv = document.getElementById('verifyResult');
             const certId = document.getElementById('certId').value;
 
-            resultDiv.innerHTML = '<div class="alert alert-info">🔍 Checking blockchain...</div>';
+            resultDiv.innerHTML = '<div class="alert alert-info"> Checking blockchain...</div>';
 
             try {
                 const response = await fetch(`/api/certificates/${certId}`);
@@ -657,7 +663,7 @@
                 if (data.isValid) {
                     resultDiv.innerHTML = `
                         <div class="alert alert-success">
-                            <h3>✅ Certificate is Valid</h3>
+                            <h3> Certificate is Valid</h3>
                         </div>
                         <div class="cert-preview">
                             <h2>🎓 Certificate of Achievement</h2>
@@ -677,10 +683,10 @@
                         </div>
                     `;
                 } else {
-                    resultDiv.innerHTML = '<div class="alert alert-error"><h3>❌ Certificate Revoked</h3><p>This certificate is no longer valid.</p></div>';
+                    resultDiv.innerHTML = '<div class="alert alert-error"><h3> Certificate Revoked</h3><p>This certificate is no longer valid.</p></div>';
                 }
             } catch (error) {
-                resultDiv.innerHTML = `<div class="alert alert-error"><h3>❌ Certificate Not Found</h3><p>${error.message}</p></div>`;
+                resultDiv.innerHTML = `<div class="alert alert-error"><h3> Certificate Not Found</h3><p>${error.message}</p></div>`;
             }
         }
 
@@ -697,7 +703,7 @@
         // Copy URL
         function copyURL(url) {
             navigator.clipboard.writeText(url);
-            alert('✅ Verification URL copied to clipboard!');
+            alert('Verification URL copied to clipboard!');
         }
 
         // Auto-verify from URL
